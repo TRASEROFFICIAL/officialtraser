@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Upload</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #111;
+      color: #eee;
+      margin: 0;
+      padding: 0;
+    }
+
+    .center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      margin: 10px;
+      border: none;
+      background-color: #00ff99;
+      color: black;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .form-section, .data-section {
+      display: none;
+      padding: 20px;
+      max-width: 450px;
+      margin: auto;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 6px;
+      font-size: 14px;
+      margin: 6px 0;
+      border: 1px solid #444;
+      border-radius: 4px;
+      background-color: #222;
+      color: white;
+    }
+
+    .card {
+      background: #1a1a1a;
+      padding: 10px;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0,255,153,0.2);
+      margin: 8px 0;
+      font-size: 13px;
+    }
+
+    img {
+      max-height: 120px;
+      border-radius: 5px;
+      margin-top: 8px;
+    }
+
+    h1, h2 {
+      color: #00ff99;
+    }
+    #searchInput {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 14px;
+  background-color: #1b1b1b;
+  color: white;
+  border: 1px solid #444;
+  border-radius: 4px;
+}
+
+.card {
+  background: #181818;
+  padding: 10px 14px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 255, 153, 0.2);
+  margin-bottom: 12px;
+  font-size: 13px;
+  text-align: left;
+  transition: transform 0.2s ease;
+}
+.card:hover {
+  transform: scale(1.01);
+}
+.card h3 {
+  margin: 0;
+  color: #00ff99;
+  font-size: 16px;
+}
+.card p {
+  margin: 6px 0;
+  font-size: 12px;
+  color: #ccc;
+}
+.card a {
+  color: #00e6e6;
+  font-size: 12px;
+  text-decoration: underline;
+}
+.card img {
+  margin-top: 8px;
+  width: 100%;
+  border-radius: 6px;
+  max-height: 140px;
+  object-fit: cover;
+}
+  </style>
+</head>
+<body>
+
+<div class="center" id="home">
+  <h1>PASAR DARK</h1>
+  <button class="btn" onclick="showForm()">Upload</button>
+  <button class="btn" onclick="showData()">List pasar gelap</button>
+</div>
+
+<div class="form-section" id="uploadForm">
+  <h2>Upload Tool</h2>
+  <input type="text" id="nama" placeholder="Nama Tool">
+  <input type="text" id="link" placeholder="Link Tool">
+  <textarea id="deskripsi" placeholder="Deskripsi"></textarea>
+  <input type="text" id="kategori" placeholder="Kategori (Exploit, Tools, dll)">
+  <input type="file" accept="image/*" onchange="encodeImageFileAsURL(this)">
+  <img id="previewImg" src="" style="display:none;" />
+  <button class="btn" onclick="uploadData()">Kirim</button>
+  <button class="btn" onclick="backHome()">Kembali</button>
+</div>
+
+<div class="data-section" id="dataView">
+ 
+  
+  <input id="searchInput" placeholder="Cari berdasarkan nama/kategori..." oninput="filterData()">
+  
+  <div id="dataContainer"></div>
+  <button class="btn" onclick="backHome()">Kembali</button>
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<script>
+  
+  if (localStorage.getItem("banned") === "true") {
+    window.location.href = "blocked.html";
+  }
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBVMpOCjY9gdd4UkSa",
+    authDomain: "yanofc-1ecd3.firebaseapp.com",
+    databaseURL: "https://yanofc-1ecd3-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "yanofc-1ecd3",
+    storageBucket: "yanofc-1ecd3.appspot.com",
+    messagingSenderId: "843043156565",
+    appId: "1:843043156565:web:e00942a837d30e4b4a9adc"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  let base64img = "";
+
+  const forbiddenWords = ["anjing", "kontol", "jembut", "memek", "bangsat"];
+
+  function isToxic(text) {
+    const lower = text.toLowerCase();
+    return forbiddenWords.some(word => lower.includes(word));
+  }
+
+  function showForm() {
+    document.getElementById("home").style.display = "none";
+    document.getElementById("uploadForm").style.display = "block";
+  }
+
+  function showData() {
+    document.getElementById("home").style.display = "none";
+    document.getElementById("dataView").style.display = "block";
+    loadData();
+  }
+
+  function backHome() {
+    document.getElementById("home").style.display = "flex";
+    document.getElementById("uploadForm").style.display = "none";
+    document.getElementById("dataView").style.display = "none";
+  }
+
+  function encodeImageFileAsURL(element) {
+    const file = element.files[0];
+    const reader = new FileReader();
+    reader.onloadend = function () {
+      base64img = reader.result;
+      document.getElementById("previewImg").src = base64img;
+      document.getElementById("previewImg").style.display = "block";
+    }
+    if (file) reader.readAsDataURL(file);
+  }
+
+  function uploadData() {
+    const nama = document.getElementById("nama").value.trim();
+    const link = document.getElementById("link").value.trim();
+    const deskripsi = document.getElementById("deskripsi").value.trim();
+    const kategori = document.getElementById("kategori").value.trim();
+
+    
+    if (!nama || !link || !deskripsi || !kategori || !base64img) {
+      alert("Isi semua kolom dan upload gambar.");
+      return;
+    }
+
+    
+    if (isToxic(nama) || isToxic(deskripsi) || isToxic(kategori)) {
+      localStorage.setItem("banned", "true");
+      alert("Kata tidak pantas terdeteksi! Kamu diblokir.");
+      window.location.href = "blocked.html";
+      return;
+    }
+
+    const newRef = db.ref("tools").push();
+    newRef.set({ nama, link, deskripsi, kategori, gambar: base64img });
+
+    alert("Upload berhasil!");
+    backHome();
+  }
+
+  let allTools = [];
+
+function loadData() {
+  const container = document.getElementById("dataContainer");
+  container.innerHTML = "";
+  allTools = [];
+
+  db.ref("tools").once("value", snapshot => {
+    const data = snapshot.val();
+    for (let id in data) {
+      allTools.push(data[id]);
+    }
+    displayData(allTools);
+  });
+}
+
+function displayData(dataArray) {
+  const container = document.getElementById("dataContainer");
+  container.innerHTML = "";
+
+  dataArray.forEach(tool => {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <h3>${tool.nama}</h3>
+      <p><b>Kategori:</b> #${tool.kategori}</p>
+      <p>${tool.deskripsi}</p>
+      <a href="${tool.link}" target="_blank">Download Tool</a>
+      ${tool.gambar ? `<img src="${tool.gambar}" />` : ""}
+    `;
+    container.appendChild(card);
+  });
+}
+
+function filterData() {
+  const keyword = document.getElementById("searchInput").value.toLowerCase();
+  const filtered = allTools.filter(tool =>
+    tool.nama.toLowerCase().includes(keyword) ||
+    tool.kategori.toLowerCase().includes(keyword)
+  );
+  displayData(filtered);
+}
+</script>
+</body>
+</html>
