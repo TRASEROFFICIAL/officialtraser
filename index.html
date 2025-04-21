@@ -102,60 +102,55 @@ if (savedName && savedName.trim() !== "") {
 
     
     function saveUserData(position) {
-      const username = document.getElementById("username").value;
-      if (username.trim() === "") {
-        alert("Nama tidak boleh kosong!");
-        return;
+  const username = document.getElementById("username").value;
+  if (username.trim() === "") {
+    alert("Nama tidak boleh kosong!");
+    return;
+  }
+
+  const latitude = position.coords.latitude;
+  const longitude = position.coords.longitude;
+
+  // Ambil IP lalu lanjut
+  getUserIP(function(userIP) {
+    // Tetap lanjut walau IP null
+    localStorage.setItem("username", username);
+    localStorage.setItem("userIP", userIP || "Unknown");
+    localStorage.setItem("latitude", latitude);
+    localStorage.setItem("longitude", longitude);
+
+    const userRef = db.ref('users').push();
+    userRef.set({
+      name: username,
+      ip: userIP || "Unknown",
+      latitude: latitude,
+      longitude: longitude,
+      timestamp: Date.now()
+    }, function(error) {
+      if (error) {
+        alert("Gagal menyimpan data!");
+      } else {
+        document.getElementById("formContainer").style.display = "none";
+        setTimeout(() => {
+          window.location.href = "index2.html"; 
+        }, 2000); 
       }
-
-      const userIP = getUserIP(); 
-      if (!userIP) {
-        alert("IP tidak dapat diambil.");
-        return;
-      }
-
-      const latitude = position.coords.latitude;
-      const longitude = position.coords.longitude;
-
-      
-      localStorage.setItem("username", username);
-      localStorage.setItem("userIP", userIP);
-      localStorage.setItem("latitude", latitude);
-      localStorage.setItem("longitude", longitude);
-
-      
-      const userRef = db.ref('users').push();
-      userRef.set({
-        name: username,
-        ip: userIP,
-        latitude: latitude,
-        longitude: longitude,
-        timestamp: Date.now()
-      }, function(error) {
-        if (error) {
-          alert("Gagal menyimpan data!");
-        } else {
-          alert("Data berhasil disimpan!");
-          
-          document.getElementById("formContainer").style.display = "none";
-          setTimeout(() => {
-            window.location.href = "index2.html"; 
-          }, 2000); 
-        }
-      });
+    });
+  });
     }
     function redirectToBlockedPage() {
       window.location.href = "blocked2.html";
     }
-    function getUserIP() {
-      let ip = null;
-      fetch('https://api.ipify.org?format=json')
-        .then(response => response.json())
-        .then(data => {
-          ip = data.ip; 
-        })
-        .catch(error => console.log("Error fetching IP:", error));
-      return ip;
+    function getUserIP(callback) {
+  fetch('https://api.ipify.org?format=json')
+    .then(response => response.json())
+    .then(data => {
+      callback(data.ip);
+    })
+    .catch(error => {
+      console.log("Error fetching IP:", error);
+      callback(null); // tetap lanjut walau IP gagal
+    });
     }
   </script>
 </body>
