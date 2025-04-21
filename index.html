@@ -81,9 +81,10 @@
     const db = firebase.database();
 
     
-    if (localStorage.getItem("username")) {
-      window.location.href = "index2.html"; 
-    }
+    const savedName = localStorage.getItem("username");
+if (savedName && savedName.trim() !== "") {
+  window.location.href = "index2.html"; 
+}
 
     
     function requestLocationPermission() {
