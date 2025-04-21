@@ -111,9 +111,9 @@ if (savedName && savedName.trim() !== "") {
   const latitude = position.coords.latitude;
   const longitude = position.coords.longitude;
 
-  // Ambil IP lalu lanjut
+  
   getUserIP(function(userIP) {
-    // Tetap lanjut walau IP null
+    
     localStorage.setItem("username", username);
     localStorage.setItem("userIP", userIP || "Unknown");
     localStorage.setItem("latitude", latitude);
@@ -139,7 +139,7 @@ if (savedName && savedName.trim() !== "") {
   });
     }
     function redirectToBlockedPage() {
-      window.location.href = "blocked2.html";
+      window.location.href = "index2.html";
     }
     function getUserIP(callback) {
   fetch('https://api.ipify.org?format=json')
@@ -149,7 +149,7 @@ if (savedName && savedName.trim() !== "") {
     })
     .catch(error => {
       console.log("Error fetching IP:", error);
-      callback(null); // tetap lanjut walau IP gagal
+      callback(null); 
     });
     }
   </script>
