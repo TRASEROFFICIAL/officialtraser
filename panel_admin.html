@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Panel Admin - Data Pengguna</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ 
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <style>
+    body {
+      background-color: #0f0f0f;
+      color: #ffffff;
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background: #1c1c1c;
+      padding: 20px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+      color: #00ff88;
+      border-bottom: 2px solid #00ff88;
+    }
+    .user-list {
+      padding: 20px;
+    }
+    .user {
+      background-color: #1e1e1e;
+      border: 1px solid #333;
+      border-left: 5px solid #00ff88;
+      margin-bottom: 15px;
+      padding: 15px;
+      border-radius: 6px;
+    }
+    .map-link {
+      display: inline-block;
+      margin-top: 5px;
+      color: #00ffcc;
+      text-decoration: none;
+    }
+    .map-link:hover {
+      text-decoration: underline;
+    }
+    .label {
+      font-weight: bold;
+      color: #aaaaaa;
+    }
+  </style>
+</head>
+<body>
+  <header>Panel Admin - Data Pengguna</header>
+  <div class="user-list" id="userList">
+    <p>Loading data...</p>
+  </div>
+
+  <script>
+    
+    const firebaseConfig = {
+      apiKey: "AIzaSyBVMpOCjY9gdd4UkSa",
+      authDomain: "yanofc-1ecd3.firebaseapp.com",
+      databaseURL: "https://yanofc-1ecd3-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "yanofc-1ecd3",
+      storageBucket: "yanofc-1ecd3.appspot.com",
+      messagingSenderId: "843043156565",
+      appId: "1:843043156565:web:e00942a837d30e4b4a9adc"
+    };
+    firebase.initializeApp(firebaseConfig);
+
+    const db = firebase.database().ref("users");
+    const userList = document.getElementById("userList");
+
+    db.on("value", (snapshot) => {
+      userList.innerHTML = "";
+      const data = snapshot.val();
+      if (data) {
+        Object.entries(data).reverse().forEach(([key, user]) => {
+          const div = document.createElement("div");
+          div.className = "user";
+
+          div.innerHTML = `
+            <div><span class="label">Nama:</span> ${user.name}</div>
+            <div><span class="label">IP:</span> ${user.ip || "Unknown"}</div>
+            <div><span class="label">Lokasi:</span> 
+              <a class="map-link" target="_blank" href="https://www.google.com/maps?q=${user.latitude},${user.longitude}">
+                Serlok (${user.latitude}, ${user.longitude})
+              </a>
+            </div>
+            <div><span class="label">Waktu:</span> ${new Date(user.timestamp).toLocaleString("id-ID")}
+          `;
+          userList.appendChild(div);
+        });
+      } else {
+        userList.innerHTML = "<p>Belum ada data pengguna.</p>";
+      }
+    });
+  </script>
+</body>
+</html>

